@@ -79,7 +79,38 @@ def estimar_matriz_probabilidades(matrices_sent, matrices_received):
     prob_10 = count_10 / count1 if count1 > 0 else 0
     prob_11 = count_11 / count1 if count1 > 0 else 0
 
-    return np.array([[prob_00, prob_01], [prob_10, prob_11]])
+    return np.array([[prob_00, prob_01], [prob_10, prob_11]]) 
+
+
+def verificar_paridad_cruzada(matrices, N):
+    correctas = 0
+    incorrectas = 0
+    corregibles = 0
+
+    for matriz in matrices:
+        # Verifica filas y columnas de paridad
+        filas_ok = np.all(np.mod(matriz[:-1, :-1].sum(axis=1), 2) == matriz[:-1, -1])
+        columnas_ok = np.all(np.mod(matriz[:-1, :-1].sum(axis=0), 2) == matriz[-1, :-1])
+        paridad_global_ok = matriz[:-1, -1].sum() % 2 == matriz[-1, -1]
+
+        if filas_ok and columnas_ok and paridad_global_ok:
+            correctas += 1
+        else:
+            # Verificar si es corregible
+            errores_fila = np.where(np.mod(matriz[:-1, :-1].sum(axis=1), 2) != matriz[:-1, -1])[0]
+            errores_columna = np.where(np.mod(matriz[:-1, :-1].sum(axis=0), 2) != matriz[-1, :-1])[0]
+
+            if len(errores_fila) == 1 and len(errores_columna) == 1:
+                # Un único bit incorrecto es corregible
+                corregibles += 1
+            else:
+                incorrectas += 1
+
+    return {
+        "correctas": correctas,
+        "incorrectas": incorrectas,
+        "corregibles": corregibles
+    }
 
 def main():
     if len(sys.argv) != 4:
@@ -110,6 +141,9 @@ def main():
     matriz_probabilidades = estimar_matriz_probabilidades(matrices_con_paridad, matrices_recibidas)
     print("Matriz de probabilidades del canal binario:")
     print(matriz_probabilidades)
+
+    resultado= verificar_paridad_cruzada(matrices_recibidas,N)
+    print(resultado)
 
 if __name__ == "__main__":
     main()
