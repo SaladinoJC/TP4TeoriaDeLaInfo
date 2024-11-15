@@ -2,14 +2,20 @@ import sys
 import numpy as np
 from math import log2
 
-def calcular_entropia(data):
-    """Calcula la entropía de una fuente de memoria nula en bits."""
+def calcular_probabilidades(data):
     total_bits = len(data) * 8
     bit_count = sum(bin(byte).count('1') for byte in data)
     prob_1 = bit_count / total_bits if total_bits > 0 else 0
     prob_0 = 1 - prob_1
-    if prob_1 > 0 and prob_0 > 0:
-        entropia = -prob_1 * log2(prob_1) - prob_0 * log2(prob_0)
+
+    probabilidades = [prob_0, prob_1]
+    return probabilidades
+
+def calcular_entropia(prob):
+    """Calcula la entropía de una fuente de memoria nula en bits."""
+    
+    if prob[1] > 0 and prob[0] > 0:
+        entropia = -prob[1] * log2(prob[1]) - prob[0] * log2(prob[0])
     else:
         entropia = 0
     return entropia
@@ -112,6 +118,28 @@ def verificar_paridad_cruzada(matrices, N):
         "corregibles": corregibles
     }
 
+def calcular_entropia_posteriori(matriz_probabilidades, probabilidades):
+    H_cond = 0
+    for i in range(2):
+        for j in range(2):
+            if matriz_probabilidades[i, j] > 0:
+                H_cond -= probabilidades[i] * matriz_probabilidades[i, j] * log2(matriz_probabilidades[i, j])
+    return H_cond
+
+def calcular_informacion_mutua(H_apriori, H_posteriori):
+    return H_apriori - H_posteriori
+
+def calcular_perdida(matriz_probabilidades, probabilidades):
+    H_cond = 0
+    prob_y = [sum(matriz_probabilidades[:, j] * probabilidades) for j in range(2)]
+
+    for j in range(2):
+        for i in range(2):
+            if prob_y[j] > 0 and matriz_probabilidades[i, j] > 0:
+                H_cond -= prob_y[j] * (matriz_probabilidades[i, j] / prob_y[j]) * log2(matriz_probabilidades[i, j] / prob_y[j])
+    return H_cond
+
+
 def main():
     if len(sys.argv) != 4:
         print("Uso: python Tpi4.py sent received N")
@@ -124,19 +152,21 @@ def main():
     sent_data = cargar_datos_archivo(sent_file)
     received_data = cargar_datos_archivo(received_file)
 
-    entropia_sent = calcular_entropia(sent_data)
+    probabilidades = calcular_probabilidades(sent_data)
+
+    entropia_sent = calcular_entropia(probabilidades)
     print(f"Entropía del archivo 'sent': {entropia_sent:.4f} bits")
 
     matrices_con_paridad = matriz_paridad_cruzada(sent_data, N)
     print("Matrices con paridad cruzada generadas a partir de 'sent':")
-    for idx, matriz in enumerate(matrices_con_paridad):
-        print(f"Matriz {idx + 1}:\n{matriz}")
+    #for idx, matriz in enumerate(matrices_con_paridad):
+    #    print(f"Matriz {idx + 1}:\n{matriz}")
 
     num_bloques = len(matrices_con_paridad)
     matrices_recibidas = leer_matrices_recibidas(received_data, N, num_bloques)
     print("Matrices leídas de 'received':")
-    for idx, matriz in enumerate(matrices_recibidas):
-        print(f"Matriz {idx + 1}:\n{matriz}")
+    #for idx, matriz in enumerate(matrices_recibidas):
+    #    print(f"Matriz {idx + 1}:\n{matriz}")
 
     matriz_probabilidades = estimar_matriz_probabilidades(matrices_con_paridad, matrices_recibidas)
     print("Matriz de probabilidades del canal binario:")
@@ -144,6 +174,19 @@ def main():
 
     resultado= verificar_paridad_cruzada(matrices_recibidas,N)
     print(resultado)
+
+    print("probabilidades")
+    print(probabilidades)
+
+    entropia_posteriori = calcular_entropia_posteriori(matriz_probabilidades, probabilidades)
+    print(f"Entropía a posteriori (H(Y|X)): {entropia_posteriori:.4f} bits")
+
+    informacion_mutua = calcular_informacion_mutua(entropia_sent, entropia_posteriori)
+    print(f"Información mutua (I(X;Y)): {informacion_mutua:.4f} bits")
+
+    perdida = calcular_perdida(matriz_probabilidades, probabilidades)
+    print(f"Pérdida (H(X|Y)): {perdida:.4f} bits")
+    
 
 if __name__ == "__main__":
     main()
