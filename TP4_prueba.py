@@ -272,6 +272,69 @@ def calcular_informacion_mutua(P_conjunta, P_a, P_b):
 
     return informacion_mutua
 
+def imprimir_matrices(matrices):
+    for idx, matriz in enumerate(matrices):
+        print(f"Matriz {idx + 1}:\n{matriz}")
+
+    return 
+
+def calcular_perdida(P_conjunta, P_condicional_bj_ai):
+    """
+    Calcula la pérdida del canal H(B|A).
+
+    Parámetros:
+    - P_conjunta: Matriz de probabilidades conjuntas P(A, B), de tamaño m x n.
+    - P_condicional_bj_ai: Matriz de probabilidades condicionales P(B_j | A_i), de tamaño m x n.
+
+    Retorna:
+    - La pérdida del canal H(B | A).
+    """
+    # Convertir los parámetros a arrays de numpy para facilitar las operaciones
+    P_conjunta = np.array(P_conjunta)
+    P_condicional_bj_ai = np.array(P_condicional_bj_ai)
+
+    # Calcular la probabilidad marginal P(A_i) sumando las columnas de la matriz conjunta
+    P_ai = np.sum(P_conjunta, axis=1)
+
+    # Inicializar la entropía a posteriori
+    perdida = 0
+
+    # Iterar sobre todas las filas (A_i) y columnas (B_j)
+    for i in range(P_condicional_bj_ai.shape[0]):
+        for j in range(P_condicional_bj_ai.shape[1]):
+            if P_condicional_bj_ai[i, j] > 0:  # Evitar logaritmos de 0
+                perdida += P_ai[i] * P_condicional_bj_ai[i, j] * np.log2(1 / P_condicional_bj_ai[i, j])
+
+    return perdida
+
+def calcular_entropias_condicionales(P_condicional_bj_ai):
+    """
+    Calcula las entropías condicionales H(B|A_i) para cada A_i.
+
+    Parámetros:
+    - P_condicional_bj_ai: Matriz de probabilidades condicionales P(B_j | A_i), de tamaño m x n.
+
+    Retorna:
+    - Lista de entropías condicionales H(B | A_i) para cada A_i.
+    """
+    # Convertir la matriz a un array de numpy
+    P_condicional_bj_ai = np.array(P_condicional_bj_ai)
+
+    # Inicializar la lista para almacenar las entropías condicionales
+    entropias_condicionales = []
+
+    # Iterar sobre cada fila (A_i) de la matriz condicional
+    for i in range(P_condicional_bj_ai.shape[0]):
+        entropia_ai = 0
+        for j in range(P_condicional_bj_ai.shape[1]):
+            if P_condicional_bj_ai[i, j] > 0:  # Evitar logaritmos de 0
+                entropia_ai += P_condicional_bj_ai[i, j] * np.log2(1 / P_condicional_bj_ai[i, j])
+        
+        # Agregar la entropía condicional de A_i a la lista
+        entropias_condicionales.append(entropia_ai)
+
+    return entropias_condicionales
+
 def main():
     if len(sys.argv) != 4:
         print("Uso: python Tpi4.py sent received N")
@@ -287,62 +350,82 @@ def main():
     p_ai = calcular_probabilidades(sent_data)
     print("Las probabilidades P(ai) son: ")
     print(p_ai)
+    print()
 
     #------------------------------------------------------------Inciso a
-    print("La entropia de la fuente es: ")
+    print("La entropia de la fuente es H(S): ")
     print(calcular_entropia(p_ai))
+    print()
 
     #------------------------------------------------------------Inciso b
     matrices_paridad = matriz_paridad_cruzada(sent_data, N)
-    print("Matrices con paridad cruzada generadas a partir de 'sent':")
-    for idx, matriz in enumerate(matrices_paridad):
-        print(f"Matriz {idx + 1}:\n{matriz}")
+    #print("Matrices con paridad cruzada generadas a partir de 'sent':")
+    #imprimir_matrices(matrices_paridad)
 
 
     num_bloques = len(matrices_paridad)
     matrices_recibidas = leer_matrices_recibidas(received_data, N, num_bloques)
-    print("Matrices leídas de 'received':")
-    for idx, matriz in enumerate(matrices_recibidas):
-        print(f"Matriz {idx + 1}:\n{matriz}")
+    #print("Matrices leídas de 'received':")
+    #imprimir_matrices(matrices_recibidas)
 
 
     #------------------------------------------------------------Inciso c
-    p_bi_ai = estimar_matriz_probabilidades(matrices_paridad, matrices_recibidas)
+    p_bj_ai = estimar_matriz_probabilidades(matrices_paridad, matrices_recibidas)
 
-    print("Matriz de probabilidad P(bi/ai): ")
-    print(p_bi_ai)
-
+    print("Matriz de probabilidad P(bj/ai): ")
+    print(p_bj_ai)
+    print()
     #------------------------------------------------------------Inciso d
     resultado= verificar_paridad_cruzada(matrices_recibidas,N)
     print(resultado)
+    print()
 
-    p_bj = calcular_priabilidades_bj(p_bi_ai, p_ai)
+    p_bj = calcular_priabilidades_bj(p_bj_ai, p_ai)
     print("Las probabilidades P(bj) son: ")
     print([float(x) for x in p_bj])
+    print()
 
-    p_ai_bj = calcular_probabilidades_ai_bj(p_bi_ai, p_ai, p_bj)
+    p_ai_bj = calcular_probabilidades_ai_bj(p_bj_ai, p_ai, p_bj)
     print("Matriz de probabilidad P(ai/bj): ")
     for fila in p_ai_bj:
         print([float(x) for x in fila])
-    
+    print()
+
     entropias_posteriori = calcular_entropia_posteriori(p_ai_bj)
-    print("Entropias a posteriori:")
+    print("Entropias a posteriori H(A/bj):")
     print([round(float(x), 4) for x in entropias_posteriori])
+    print()
+
+    h_b_ai = calcular_entropias_condicionales(p_bj_ai)
+    print("Entropias a posteriori H(B/ai):")
+    print([round(float(x), 4) for x in h_b_ai])
+    print()
 
     probabilidad_simultanea1 = calcular_probabilidad_conjunta(p_ai_bj,p_bj)
-    probabilidad_simultanea2 = calcular_probabilidad_conjunta(p_bi_ai,p_ai)
+    probabilidad_simultanea2 = calcular_probabilidad_conjunta(p_bj_ai,p_ai)
     
-    print("Probabilidades simultaneas 1")
+    print("Probabilidades simultaneas P(ai,bj)")
     print(probabilidad_simultanea1)
+    print()
 
-    print("Probabilidades simultaneas 2")
-    print(probabilidad_simultanea2)
+    #print("Probabilidades simultaneas 2")
+    #print(probabilidad_simultanea2)
 
-    entropia_posteriori_media = calcular_entropia_posteriori_media(probabilidad_simultanea1, p_ai_bj)
-    print(f"Entropía media a posteriori H(A|B): {entropia_posteriori_media:.4f} bits")
+    ruido = calcular_entropia_posteriori_media(probabilidad_simultanea1, p_ai_bj)
+    print(f"Entropía media a posteriori H(A|B) o equivocacion/ruido: {ruido:.4f} bits")
+    print()
 
     informacion_mutua = calcular_informacion_mutua(probabilidad_simultanea1, p_ai, p_bj)
     print(f"Información mutua I(A, B): {informacion_mutua:.4f} bits")
+    print()
+
+    print("La entropia H(B): ")
+    print(calcular_entropia(p_bj))
+    print()
+
+    perdida = calcular_perdida(probabilidad_simultanea1, p_bj_ai)
+    print(f"Entropía media a posteriori H(B|A) o perdida: {perdida:.4f} bits")
+    print()
 
 if __name__ == "__main__":
     main()
