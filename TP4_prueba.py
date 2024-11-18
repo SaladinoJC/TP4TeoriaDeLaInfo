@@ -96,8 +96,10 @@ def verificar_paridad_cruzada(matrices, N):
         # Verifica filas y columnas de paridad
         filas_ok = np.all(np.mod(matriz[:-1, :-1].sum(axis=1), 2) == matriz[:-1, -1])
         columnas_ok = np.all(np.mod(matriz[:-1, :-1].sum(axis=0), 2) == matriz[-1, :-1])
-        paridad_global_ok = matriz[:-1, -1].sum() % 2 == matriz[-1, -1]
-
+        paridad_filas = np.mod(matriz[:-1, -1].sum(), 2)
+        paridad_columnas = np.mod(matriz[-1, :-1].sum(), 2)
+        paridad_global_ok = paridad_filas == paridad_columnas == matriz[-1, -1]
+        
         if filas_ok and columnas_ok and paridad_global_ok:
             correctas += 1
         else:
