@@ -103,11 +103,25 @@ def verificar_paridad_cruzada(matrices, N):
         if filas_ok and columnas_ok and paridad_global_ok:
             correctas += 1
         else:
-            # Verificar si es corregible
-            errores_fila = np.where(np.mod(matriz[:-1, :-1].sum(axis=1), 2) != matriz[:-1, -1])[0]
-            errores_columna = np.where(np.mod(matriz[:-1, :-1].sum(axis=0), 2) != matriz[-1, :-1])[0]
 
-            if len(errores_fila) == 1 and len(errores_columna) == 1:
+            errores_fila = 0
+            errores_columna = 0
+            # Verificar si es corregible
+            # Verificar paridad en filas
+            for fila in matriz:
+               if sum(fila) % 2 != 0:
+                  errores_fila += 1
+
+            # Verificar paridad en columnas
+            columnas = zip(*matriz)  # Transponer para acceder a las columnas
+            for columna in columnas:
+                  if sum(columna) % 2 != 0:
+                       errores_columna += 1
+            #print("errores de fila")
+            #print(errores_fila)
+            #print("errores de columna")
+            #print(errores_columna)
+            if (errores_fila) == 1 and (errores_columna) == 1:
                 # Un único bit incorrecto es corregible
                 corregibles += 1
             else:
@@ -361,14 +375,14 @@ def main():
 
     #------------------------------------------------------------Inciso b
     matrices_paridad = matriz_paridad_cruzada(sent_data, N)
-    print("Matrices con paridad cruzada generadas a partir de 'sent':")
-    imprimir_matrices(matrices_paridad)
+    #print("Matrices con paridad cruzada generadas a partir de 'sent':")
+    #imprimir_matrices(matrices_paridad)
 
 
     num_bloques = len(matrices_paridad)
     matrices_recibidas = leer_matrices_recibidas(received_data, N, num_bloques)
-    print("Matrices leídas de 'received':")
-    imprimir_matrices(matrices_recibidas)
+    #print("Matrices leídas de 'received':")
+    #imprimir_matrices(matrices_recibidas)
 
 
     #------------------------------------------------------------Inciso c
