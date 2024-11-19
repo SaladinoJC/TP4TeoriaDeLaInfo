@@ -361,14 +361,14 @@ def main():
 
     #------------------------------------------------------------Inciso b
     matrices_paridad = matriz_paridad_cruzada(sent_data, N)
-    #print("Matrices con paridad cruzada generadas a partir de 'sent':")
-    #imprimir_matrices(matrices_paridad)
+    print("Matrices con paridad cruzada generadas a partir de 'sent':")
+    imprimir_matrices(matrices_paridad)
 
 
     num_bloques = len(matrices_paridad)
     matrices_recibidas = leer_matrices_recibidas(received_data, N, num_bloques)
-    #print("Matrices leídas de 'received':")
-    #imprimir_matrices(matrices_recibidas)
+    print("Matrices leídas de 'received':")
+    imprimir_matrices(matrices_recibidas)
 
 
     #------------------------------------------------------------Inciso c

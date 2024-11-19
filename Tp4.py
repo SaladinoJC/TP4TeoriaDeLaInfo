@@ -105,7 +105,10 @@ def verificar_paridad_cruzada(matrices, N):
             # Verificar si es corregible
             errores_fila = np.where(np.mod(matriz[:-1, :-1].sum(axis=1), 2) != matriz[:-1, -1])[0]
             errores_columna = np.where(np.mod(matriz[:-1, :-1].sum(axis=0), 2) != matriz[-1, :-1])[0]
-
+            print("errores de fila")
+            print(errores_fila)
+            print("errores de columna")
+            print(errores_columna)
             if len(errores_fila) == 1 and len(errores_columna) == 1:
                 # Un único bit incorrecto es corregible
                 corregibles += 1
@@ -159,14 +162,14 @@ def main():
 
     matrices_con_paridad = matriz_paridad_cruzada(sent_data, N)
     print("Matrices con paridad cruzada generadas a partir de 'sent':")
-    #for idx, matriz in enumerate(matrices_con_paridad):
-    #    print(f"Matriz {idx + 1}:\n{matriz}")
+    for idx, matriz in enumerate(matrices_con_paridad):
+        print(f"Matriz {idx + 1}:\n{matriz}")
 
     num_bloques = len(matrices_con_paridad)
     matrices_recibidas = leer_matrices_recibidas(received_data, N, num_bloques)
     print("Matrices leídas de 'received':")
-    #for idx, matriz in enumerate(matrices_recibidas):
-    #    print(f"Matriz {idx + 1}:\n{matriz}")
+    for idx, matriz in enumerate(matrices_recibidas):
+        print(f"Matriz {idx + 1}:\n{matriz}")
 
     matriz_probabilidades = estimar_matriz_probabilidades(matrices_con_paridad, matrices_recibidas)
     print("Matriz de probabilidades del canal binario:")
